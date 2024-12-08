@@ -1,3 +1,6 @@
+<?php
+var_dump($_POST);
+?>
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -81,12 +84,6 @@
             display: none;
         }
     </style>
-    <script>
-        function checkout() {
-            alert("Lancement du processus de paiement...");
-            // Appel à la fonction CinetPay (à intégrer avec vos paramètres réels)
-        }
-    </script>
 </head>
 
 <body>
@@ -98,7 +95,10 @@
         <button class="btn" onclick="checkout()">Acheter Maintenant</button>
     </div>
 
-    <?php include 'process_payment.php'; ?>
+    <?php
+    // Process Payment - Inclusion of the payment logic.
+    require_once 'process_payment.php';
+    ?>
 </body>
 
 </html>

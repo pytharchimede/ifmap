@@ -296,16 +296,17 @@ class Home extends CI_Controller
     }
 
 
-     // Instructor follow
-     public function toggle_following() {
+    // Instructor follow
+    public function toggle_following()
+    {
         $instructor_id = $this->input->post('instructor_id');
         $user_id = $this->input->post('user_id');
-    
+
         $this->load->model('User_model');
         $response = $this->User_model->toggle_following($instructor_id, $user_id);
         echo json_encode($response);
     }
-    
+
 
 
 
@@ -681,167 +682,19 @@ class Home extends CI_Controller
         $this->load->view('frontend/' . get_frontend_settings('theme') . '/paypal_checkout', $page_data);
     }
 
-    // PAYPAL CHECKOUT ACTIONS
-    public function paypal_payment($user_id = "", $amount_paid = "", $paymentID = "", $paymentToken = "", $payerID = "", $payment_request_mobile = "")
+    // Cette méthode gère la logique pour le paiement CinetPay
+    public function cinetpay_payment()
     {
-        $paypal_keys = get_settings('paypal');
-        $paypal = json_decode($paypal_keys);
-
-        if ($paypal[0]->mode == 'sandbox') {
-            $paypalClientID = $paypal[0]->sandbox_client_id;
-            $paypalSecret   = $paypal[0]->sandbox_secret_key;
-        } else {
-            $paypalClientID = $paypal[0]->production_client_id;
-            $paypalSecret   = $paypal[0]->production_secret_key;
-        }
-
-        //THIS IS HOW I CHECKED THE PAYPAL PAYMENT STATUS
-        $status = $this->payment_model->paypal_payment($paymentID, $paymentToken, $payerID, $paypalClientID, $paypalSecret);
-        if (!$status) {
-            $this->session->set_flashdata('error_message', site_phrase('an_error_occurred_during_payment'));
-            redirect('home/shopping_cart', 'refresh');
-        }
-        $this->crud_model->enrol_student($user_id);
-        $this->crud_model->course_purchase($user_id, 'paypal', $amount_paid);
-        $this->email_model->course_purchase_notification($user_id, 'paypal', $amount_paid);
-        $this->session->set_flashdata('flash_message', site_phrase('payment_successfully_done'));
-        if ($payment_request_mobile == 'true') :
-            $course_id = $this->session->userdata('cart_items');
-            redirect('home/payment_success_mobile/' . $course_id[0] . '/' . $user_id . '/paid', 'refresh');
-        else :
-            $this->session->set_userdata('cart_items', array());
-            redirect('home/my_courses', 'refresh');
-        endif;
+        // Votre logique pour gérer le paiement ici
+        // Vous pouvez récupérer les données envoyées par POST
+        $cart_items = $this->session->userdata('cart_items');
+        // Vous pouvez envoyer les données à l'API de paiement ici
     }
-
-    // SHOW STRIPE CHECKOUT PAGE
-    public function stripe_checkout($payment_request = "only_for_mobile")
-    {
-        if ($this->session->userdata('user_login') != 1 && $payment_request != 'true')
-            redirect('home', 'refresh');
-
-        //checking price
-        $payment_info['payable_amount'] = $this->session->userdata('total_price_of_checking_out');
-        $page_data['payment_request'] = $payment_request;
-        $page_data['user_details']    = $this->user_model->get_user($this->session->userdata('user_id'))->row_array();
-        $page_data['amount_to_pay']   = $payment_info['payable_amount'];
-        $this->load->view('payment/stripe/stripe_checkout', $page_data);
-    }
-
-    // STRIPE CHECKOUT ACTIONS
-    public function stripe_payment($user_id = "", $payment_request_mobile = "", $session_id = "")
-    {
-        //THIS IS HOW I CHECKED THE STRIPE PAYMENT STATUS
-        $response = $this->payment_model->stripe_payment($user_id, $session_id);
-
-        if ($response['payment_status'] === 'succeeded') {
-            // STUDENT ENROLMENT OPERATIONS AFTER A SUCCESSFUL PAYMENT
-            $check_duplicate = $this->crud_model->check_duplicate_payment_for_stripe($response['transaction_id'], $session_id);
-            if ($check_duplicate == false) :
-                $this->crud_model->enrol_student($user_id);
-                $this->crud_model->course_purchase($user_id, 'stripe', $response['paid_amount'], $response['transaction_id'], $session_id);
-                $this->email_model->course_purchase_notification($user_id, 'stripe', $response['paid_amount']);
-            else :
-                //duplicate payment
-                $this->session->set_flashdata('error_message', site_phrase('session_time_out'));
-                redirect('home/shopping_cart', 'refresh');
-            endif;
-
-            if ($payment_request_mobile == 'true') :
-                $course_id = $this->session->userdata('cart_items');
-                $this->session->set_flashdata('flash_message', site_phrase('payment_successfully_done'));
-                redirect('home/payment_success_mobile/' . $course_id[0] . '/' . $user_id . '/paid', 'refresh');
-            else :
-                $this->session->set_userdata('cart_items', array());
-                $this->session->set_flashdata('flash_message', site_phrase('payment_successfully_done'));
-                redirect('home/my_courses', 'refresh');
-            endif;
-        } else {
-            if ($payment_request_mobile == 'true') :
-                $course_id = $this->session->userdata('cart_items');
-                $this->session->set_flashdata('flash_message', $response['status_msg']);
-                redirect('home/payment_success_mobile/' . $course_id[0] . '/' . $user_id . '/error', 'refresh');
-            else :
-                $this->session->set_flashdata('error_message', $response['status_msg']);
-                redirect('home/shopping_cart', 'refresh');
-            endif;
-        }
-    }
-
-
-    public function razorpay_checkout($payment_request = "only_for_mobile")
-    {
-        if ($this->session->userdata('user_login') != 1 && $payment_request != 'true')
-            redirect('home', 'refresh');
-
-
-        $payment_info['payable_amount'] = $this->session->userdata('total_price_of_checking_out');
-        $page_data['payment_request'] = $payment_request;
-        $page_data['user_details']    = $this->user_model->get_user($this->session->userdata('user_id'))->row_array();
-        $page_data['amount_to_pay']   = $payment_info['payable_amount'];
-        $this->load->view('payment/razorpay/razorpay_checkout', $page_data);
-    }
-
-    // PAYPAL CHECKOUT ACTIONS
-    public function razorpay_payment($payment_request_mobile = "")
-    {
-
-        $response = array();
-        if (isset($_GET['user_id']) && !empty($_GET['user_id']) && isset($_GET['amount']) && !empty($_GET['amount'])) {
-
-            $user_id            = $_GET['user_id'];
-            $amount             = $_GET['amount'];
-            $razorpay_order_id      = $_GET['razorpay_order_id'];
-            $payment_id         = $_GET['payment_id'];
-            $signature        = $_GET['signature'];
-
-            //THIS IS HOW I CHECKED THE PAYPAL PAYMENT STATUS
-            $status = $this->payment_model->razorpay_payment($razorpay_order_id, $payment_id, $amount, $signature);
-
-            if ($status == 1) {
-                $payment_key['payment_id'] = $payment_id;
-                $payment_key['razorpay_order_id'] = $razorpay_order_id;
-                $payment_key['signature'] = $signature;
-                $payment_key = json_encode($payment_key);
-
-                $this->crud_model->enrol_student($user_id);
-                $this->crud_model->course_purchase($user_id, 'razorpay', $amount, $payment_key);
-                $this->email_model->course_purchase_notification($user_id, 'razorpay', $amount);
-                $this->session->set_flashdata('flash_message', site_phrase('payment_successfully_done'));
-                if ($payment_request_mobile == 'true') :
-                    $course_id = $this->session->userdata('cart_items');
-                    redirect('home/payment_success_mobile/' . $course_id[0] . '/' . $user_id . '/paid', 'refresh');
-                else :
-                    $this->session->set_userdata('cart_items', array());
-                    redirect('home/my_courses', 'refresh');
-                endif;
-            } else {
-                if ($payment_request_mobile == 'true') :
-                    $course_id = $this->session->userdata('cart_items');
-                    $this->session->set_flashdata('flash_message', $response['status_msg']);
-                    redirect('home/payment_success_mobile/' . $course_id[0] . '/' . $user_id . '/error', 'refresh');
-                else :
-                    $this->session->set_flashdata('error_message', site_phrase('payment_failed') . '! ' . site_phrase('something_is_wrong'));
-                    redirect('home/shopping_cart', 'refresh');
-                endif;
-            }
-        } else {
-            if ($payment_request_mobile == 'true') :
-                $course_id = $this->session->userdata('cart_items');
-                $this->session->set_flashdata('flash_message', $response['status_msg']);
-                redirect('home/payment_success_mobile/' . $course_id[0] . '/' . $user_id . '/error', 'refresh');
-            else :
-                $this->session->set_flashdata('error_message', site_phrase('payment_failed') . '! ' . site_phrase('something_is_wrong'));
-                redirect('home/shopping_cart', 'refresh');
-            endif;
-        }
-    }
-
 
     public function lesson($slug = "", $course_id = "", $lesson_id = "")
     {
         $enroll_status = enroll_status($course_id);
-        
+
         $user_id = $this->session->userdata('user_id');
         $course_instructor_ids = array();
         if ($this->session->userdata('user_login') != 1) {
@@ -855,7 +708,7 @@ class Home extends CI_Controller
         $course_instructor_ids = explode(',', $course_details['user_id']);
 
         if ($course_details['course_type'] == 'general') {
-           
+
             //this function saved current lesson id and return previous lesson id if $lesson_id param is empty
             $lesson_id = $this->crud_model->update_last_played_lesson($course_id, $lesson_id);
             $sections = $this->crud_model->get_section('course', $course_id);
@@ -1736,8 +1589,8 @@ class Home extends CI_Controller
             }
         }
 
-        if (get_frontend_settings('recaptcha_status_v3') == true){
-            if(isset($response['success'])){
+        if (get_frontend_settings('recaptcha_status_v3') == true) {
+            if (isset($response['success'])) {
                 $this->session->set_flashdata('flash_message', $response['success']);
                 redirect($referrer_url, 'refresh');
             } else {
@@ -2069,18 +1922,4 @@ class Home extends CI_Controller
             echo $response;
         }
     }
-
-
-   
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -1,28 +1,32 @@
 <?php
+defined('BASEPATH') or exit('No direct script access allowed');
 
-namespace Model;
-
-class CinetPayPayment
+class CinetPayPayment extends CI_Model
 {
     private $apikey;
     private $site_id;
     private $notify_url;
     private $mode;
 
-    public function __construct($apikey, $site_id, $notify_url, $mode = 'PRODUCTION')
+    // Constructeur de la classe
+    public function __construct($apikey = null, $site_id = null, $notify_url = null, $mode = 'PRODUCTION')
     {
-        $this->apikey = $apikey;
-        $this->site_id = $site_id;
-        $this->notify_url = $notify_url;
+        parent::__construct();
+
+        // Initialisation avec les paramètres ou valeurs par défaut
+        $this->apikey = $apikey ?: '76102700367505632e52a84.44877120';  // Remplacez par votre clé API
+        $this->site_id = $site_id ?: '5883702';  // Remplacez par votre site ID
+        $this->notify_url = $notify_url ?: 'https://ifmap.ci/notify/';  // Remplacez par votre URL de notification
         $this->mode = $mode;
     }
 
+    // Génère un ID de transaction unique
     public function generateTransactionId()
     {
         return (string) mt_rand(100000000, 999999999);
     }
 
-
+    // Récupère les données pour le paiement
     public function getCheckoutData($amount, $currency, $description, $customerData)
     {
         return [

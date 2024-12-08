@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
 | -------------------------------------------------------------------
@@ -89,7 +89,7 @@ $autoload['drivers'] = array();
 |
 |	$autoload['helper'] = array('url', 'file');
 */
-$autoload['helper'] = array('url','file','form','security','string','inflector','directory','download','user','multi_language', 'common', 'pagination', 'addon');
+$autoload['helper'] = array('url', 'file', 'form', 'security', 'string', 'inflector', 'directory', 'download', 'user', 'multi_language', 'common', 'pagination', 'addon');
 
 /*
 | -------------------------------------------------------------------
@@ -132,4 +132,4 @@ $autoload['language'] = array();
 |
 |	$autoload['model'] = array('first_model' => 'first');
 */
-$autoload['model'] = array('user_model', 'crud_model', 'video_model', 'email_model', 'payment_model', 'lazyloaddata_model' => 'lazyload', 'api_model', 'addon_model', 'social_login_modal', 'academy_cloud_model');
+$autoload['model'] = array('user_model', 'crud_model', 'video_model', 'email_model', 'payment_model', 'lazyloaddata_model' => 'lazyload', 'api_model', 'addon_model', 'social_login_modal', 'academy_cloud_model', 'CinetPayPayment');
