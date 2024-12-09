@@ -172,6 +172,13 @@
             formData.append("cart_items_discounted_price[]", "<?php echo $course_details['discounted_price']; ?>");
         <?php } ?>
 
+        formData.append("user_first_name", "<?php echo $user_details['first_name']; ?>");
+        formData.append("user_last_name", "<?php echo $user_details['last_name']; ?>");
+        formData.append("user_email", "<?php echo $user_details['email']; ?>");
+        formData.append("user_phone", "<?php echo $user_details['phone']; ?>");
+        formData.append("user_address", "<?php echo $user_details['address']; ?>");
+
+
         // Ajouter le total de la commande
         formData.append("total_price", "<?php echo $total; ?>");
 
